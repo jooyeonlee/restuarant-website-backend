@@ -1,10 +1,6 @@
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.orm import relationship
-from werkzeug.security import generate_password_hash, check_password_hash
 from datetime import datetime
-from secrets import token_hex
-import uuid
-
 
 #db
 db = SQLAlchemy()
@@ -47,45 +43,15 @@ class Menu(db.Model):
         if new.get('image'):
             self.image = new.get('image')
 
-class Customer(db.Model):
-    __tablename__ = 'customer'
-    id = db.Column(db.String, primary_key=True)
-    firstname = db.Column(db.String(50), nullable=False)
-    lastname = db.Column(db.String(50), nullable=False)
-    email = db.Column(db.String(150), nullable=False, unique=True)
-    password = db.Column(db.String(200), nullable=False)
-    contact = db.Column(db.String(150), nullable=False)
-    date_created = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
-    order = relationship("Order", back_populates="customer")
-
-    def __init__(self, firstname, lastname, email, password, contact):
-        self.id = str(uuid.uuid4())
-        self.firstname = firstname
-        self.lastname = lastname
-        self.email = email
-        self.contact = contact
-        self.password = generate_password_hash(password)
-
-    def to_dict(self):
-        return {
-            'id': self.id,
-            'firstname': self.firstname,
-            'lastname': self.lastname,
-            'email': self.email,
-            'password': self.password,
-            'datecreated': self.date_created
-        }
-
 class Order(db.Model):
     __tablename__ = 'order'
     id = db.Column(db.Integer, primary_key=True)
-    userid = db.Column(db.String, db.ForeignKey('customer.id'))
+    userid = db.Column(db.String(30), nullable=False)
     status_id = db.Column(db.Integer, nullable = True, default=0)
     date_created = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
     payment_id = db.Column(db.String(100), nullable=True)
     coupon_id = db.Column(db.Integer, nullable=True)
     price = db.Column(db.Numeric(9,2), nullable=False)
-    customer = relationship("Customer", back_populates="order")
     orderitem = relationship("OrderItem", back_populates="order")
 
     def to_dict(self):
@@ -97,7 +63,21 @@ class Order(db.Model):
             'payment_id' : self.payment_id,
             'coupon_id' : self.coupon_id,
             'price' : self.price
-        }
+    }
+
+    def from_dict(self, new):
+        if new.get('id'):
+            self.id = new.get('id')
+        if new.get('userid'):
+            self.userid = new.get('userid')
+        if new.get('status_id'):
+            self.status_id = new.get('status_id')
+        if new.get('payment_id'):
+            self.payment_id = new.get('payment_id')
+        if new.get('coupon_id'):
+            self.coupon_id = new.get('coupon_id')
+        if new.get('price'):
+            self.price = new.get('price')
 
 class OrderItem(db.Model):
     __tablename__ = 'orderitem'
@@ -116,5 +96,16 @@ class OrderItem(db.Model):
             'menuid' : self.menuid,
             'quantity' : self.quantity,
             'price' : self.price
-        }
+    }
     
+    def from_dict(self, new):
+        if new.get('id'):
+            self.id = new.get('id')
+        if new.get('orderid'):
+            self.orderid = new.get('orderid')
+        if new.get('menuid'):
+            self.menuid = new.get('menuid')
+        if new.get('quantity'):
+            self.quantity = new.get('quantity')
+        if new.get('price'):
+            self.price = new.get('price')
